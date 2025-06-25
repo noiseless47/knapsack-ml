@@ -322,8 +322,8 @@ docker run -p 8000:8000 -p 3000:3000 knapsackml
 
 <div align="center">
 
-| <img src="https://github.com/identicons/aaditya.png" width="100px;"/><br /><sub><b>Aaditya S Rao</b></sub> | <img src="https://github.com/identicons/aditi.png" width="100px;"/><br /><sub><b>Aditi Shastri</b></sub> | <img src="https://github.com/identicons/asish.png" width="100px;"/><br /><sub><b>Asish Kumar Yeleti</b></sub> | <img src="https://github.com/identicons/priya.png" width="100px;"/><br /><sub><b>Priya Sharma</b></sub> |
-| :---: | :---: | :---: | :---: |
+| <img src="https://github.com/identicons/aaditya.png" width="100px;"/><br /><sub><b>Aaditya S Rao</b></sub> | <img src="https://github.com/identicons/aditi.png" width="100px;"/><br /><sub><b>Aditi Shastri</b></sub> | <img src="https://github.com/identicons/asish.png" width="100px;"/><br /><sub><b>Asish Kumar Yeleti</b></sub> |
+| :---: | :---: | :---: |
 
 Department of Information Science and Engineering<br>
 University Name<br>
