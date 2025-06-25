@@ -71,8 +71,8 @@ export default function Research() {
     {
       title: "Approximating Solutions to the Knapsack Problem Using Machine Learning and Genetic Algorithms",
       authors: "Aaditya S Rao, Aditi Shastri, Asish Kumar Yeleti",
-      status: "Under review - IEEE Transactions on Evolutionary Computation",
-      year: "2023",
+      status: "To be submitted",
+      year: "2025",
       abstract: "The knapsack problem is a classic combinatorial optimization challenge with applications across numerous domains. While traditional algorithms provide exact solutions, they often become computationally intensive for large problem instances. This paper presents multiple machine learning approaches to efficiently approximate optimal solutions to the knapsack problem. We explore the effectiveness of supervised learning models (Random Forest, Gradient Boosting, and Neural Networks) as well as evolutionary computation through Genetic Algorithms. Our hybrid approach combines ML predictions with solution repair mechanisms and local search optimization to maintain solution feasibility and quality. Experimental results demonstrate that our models achieve near-optimal solutions with significantly reduced computational overhead compared to exact algorithms."
     }
   ];
@@ -259,7 +259,7 @@ export default function Research() {
                 className="mt-12 text-center"
               >
                 <a 
-                  href="/papers/knapsack_ml_research.pdf" 
+                  href="/papers/research.pdf" 
                   target="_blank" 
                   className="inline-block btn-gradient px-8 py-4 rounded-lg font-medium"
                 >
