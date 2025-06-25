@@ -148,7 +148,7 @@ export default function KnapsackSolver({
 
       {/* Knapsack Capacity */}
       <div className="glass-effect p-4 rounded-xl">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-lg font-semibold text-white mb-2">
           Knapsack Capacity
         </label>
         <div className="flex gap-4">
@@ -173,7 +173,7 @@ export default function KnapsackSolver({
 
       {/* Solver Type */}
       <div className="glass-effect p-4 rounded-xl solver-type-container">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-lg font-semibold text-white mb-2">
           Solver Type
         </label>
         <Select
@@ -192,7 +192,7 @@ export default function KnapsackSolver({
       {/* Items */}
       <div className="glass-effect p-4 rounded-xl">
         <div className="flex justify-between items-center mb-4">
-          <label className="block text-sm font-medium text-gray-300">
+          <label className="block text-lg font-semibold text-white">
             Items ({items.length})
           </label>
           <motion.button
@@ -215,14 +215,14 @@ export default function KnapsackSolver({
               transition={{ duration: 0.3 }}
               className="flex items-center gap-2 p-3 bg-black/30 rounded-lg group border border-white/5"
             >
-              <div className="relative w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-white text-xs shrink-0">
+              <div className="relative w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500/30 to-blue-500/30 text-white text-base font-bold shrink-0 border border-purple-500/40">
                 {index + 1}
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full"></span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-purple-600 rounded-full"></span>
               </div>
               
               <div className="flex-1 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Value</label>
+                  <label className="block text-sm text-white font-medium mb-1">Value</label>
                   <NumberInput
                     value={item.value}
                     onChange={(value) => updateItemValue(item.id, value)}
@@ -231,7 +231,7 @@ export default function KnapsackSolver({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Weight</label>
+                  <label className="block text-sm text-white font-medium mb-1">Weight</label>
                   <NumberInput
                     value={item.weight}
                     onChange={(value) => updateItemWeight(item.id, value)}

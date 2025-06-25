@@ -91,9 +91,9 @@ export default function NumberInput({
             min={min}
             max={max}
             step={step}
-            className={`w-full px-3 py-2 rounded-lg bg-black/30 border ${
-              isFocused ? 'border-purple-500/50' : 'border-white/10'
-            } text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500/30 transition-all duration-200 pr-20`}
+            className={`w-full px-3 py-2 rounded-lg bg-black/40 border ${
+              isFocused ? 'border-purple-500/70' : 'border-white/20'
+            } text-white text-lg font-medium placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500/50 transition-all duration-200 pr-20`}
           />
           
           <div className="absolute right-1 inset-y-1 flex">
@@ -105,7 +105,7 @@ export default function NumberInput({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               type="button"
               onClick={decrement}
-              className="px-2 py-1 rounded-l-md bg-black/50 text-white border border-white/10 backdrop-blur-sm"
+              className="px-3 py-1 rounded-l-md bg-black/60 text-white text-xl font-bold border border-white/20 backdrop-blur-sm"
             >
               −
             </motion.button>
@@ -118,7 +118,7 @@ export default function NumberInput({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               type="button"
               onClick={increment}
-              className="px-2 py-1 rounded-r-md bg-black/50 text-white border-y border-r border-white/10 backdrop-blur-sm"
+              className="px-3 py-1 rounded-r-md bg-black/60 text-white text-xl font-bold border-y border-r border-white/20 backdrop-blur-sm"
             >
               +
             </motion.button>
