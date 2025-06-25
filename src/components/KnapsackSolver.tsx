@@ -1,249 +1,306 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { KnapsackRequest, KnapsackSolution, SolverType } from '@/types/knapsack';
-import NumberInput from './NumberInput';
-import Select from './Select';
+import { useState, useCallback, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { KnapsackSolution, SolverType } from '@/types/knapsack';
+import NumberInput from '@/components/NumberInput';
+import Select from '@/components/Select';
+
+interface Item {
+  id: number;
+  weight: number;
+  value: number;
+}
 
 interface KnapsackSolverProps {
   onSolutionFound: (solution: KnapsackSolution) => void;
-  initialValues?: {
-    weights: number[];
-    values: number[];
-    capacity: number;
-  };
+  initialItems?: Item[];
+  initialCapacity?: number;
+  exampleId?: number;
 }
 
-const solverOptions = [
-  { value: 'all' as SolverType, label: 'All Methods (Compare)' },
-  { value: 'dp' as SolverType, label: 'Dynamic Programming (Optimal)' },
-  { value: 'greedy' as SolverType, label: 'Greedy Algorithm' },
-  { value: 'ml' as SolverType, label: 'Machine Learning' }
-];
-
-export default function KnapsackSolver({ onSolutionFound, initialValues }: KnapsackSolverProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export default function KnapsackSolver({ 
+  onSolutionFound, 
+  initialItems, 
+  initialCapacity, 
+  exampleId = -1 
+}: KnapsackSolverProps) {
+  const [items, setItems] = useState<Item[]>(
+    initialItems || [
+      { id: 0, weight: 10, value: 60 },
+      { id: 1, weight: 20, value: 100 },
+      { id: 2, weight: 30, value: 120 },
+    ]
+  );
+  const [capacity, setCapacity] = useState<number>(initialCapacity || 50);
+  const [solverType, setSolverType] = useState<SolverType>('all');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<KnapsackRequest>({
-    weights: initialValues?.weights || [],
-    values: initialValues?.values || [],
-    capacity: initialValues?.capacity || 0,
-    solver_type: 'all'
-  });
 
+  // Update items and capacity when example changes
   useEffect(() => {
-    if (initialValues) {
-      setFormData(prev => ({
-        ...prev,
-        weights: initialValues.weights,
-        values: initialValues.values,
-        capacity: initialValues.capacity
-      }));
+    if (initialItems && initialCapacity) {
+      setItems(initialItems);
+      setCapacity(initialCapacity);
     }
-  }, [initialValues]);
+  }, [initialItems, initialCapacity, exampleId]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    if (name === 'weights' || name === 'values') {
-      // Handle array inputs - keep as string array initially
-      const numberArray = value
-        .split(',')
-        .map(str => str.trim())
-        .filter(str => str.length > 0);
-      
-      setFormData(prev => ({
-        ...prev,
-        [name]: numberArray
-      }));
-    } else {
-      // Handle numeric inputs
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+  const animatePresenceVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
   };
 
-  const handleSelectChange = (value: SolverType) => {
-    setFormData(prev => ({
-      ...prev,
-      solver_type: value
-    }));
-  };
+  const addItem = useCallback(() => {
+    setItems(prevItems => [
+      ...prevItems, 
+      { 
+        id: prevItems.length, 
+        weight: Math.floor(Math.random() * 30) + 5, 
+        value: Math.floor(Math.random() * 100) + 50 
+      }
+    ]);
+  }, []);
 
-  const handleCapacityChange = (value: number) => {
-    setFormData(prev => ({
-      ...prev,
-      capacity: value
-    }));
-  };
+  const removeItem = useCallback((id: number) => {
+    setItems(prevItems => prevItems.filter(item => item.id !== id));
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const updateItemValue = useCallback((id: number, value: number) => {
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === id ? { ...item, value } : item
+      )
+    );
+  }, []);
+
+  const updateItemWeight = useCallback((id: number, weight: number) => {
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === id ? { ...item, weight } : item
+      )
+    );
+  }, []);
+
+  const handleSolve = async () => {
     setIsLoading(true);
     setError(null);
 
-    // Validate arrays are not empty
-    if (formData.weights.length === 0 || formData.values.length === 0) {
-      setError('Please enter valid weights and values');
-      setIsLoading(false);
-      return;
-    }
-
-    // Ensure arrays have the same length
-    if (formData.weights.length !== formData.values.length) {
-      setError('Weights and values must have the same number of items');
-      setIsLoading(false);
-      return;
-    }
-
-    // Format the data - ensure arrays are properly formatted and converted to numbers
-    const weights = Array.isArray(formData.weights) 
-      ? formData.weights.map(w => parseFloat(String(w).trim()))
-      : String(formData.weights).split(',').map(w => parseFloat(w.trim()));
-    
-    const values = Array.isArray(formData.values)
-      ? formData.values.map(v => parseFloat(String(v).trim()))
-      : String(formData.values).split(',').map(v => parseFloat(v.trim()));
-
-    // Validate all values are valid numbers
-    if (weights.some(isNaN) || values.some(isNaN)) {
-      setError('All weights and values must be valid numbers');
-      setIsLoading(false);
-      return;
-    }
-
-    const requestData = {
-      weights,
-      values,
-      capacity: parseFloat(String(formData.capacity)),
-      solver_type: formData.solver_type
-    };
-
-    // Debug log
-    console.log('Request data:', {
-      ...requestData,
-      weights_type: Array.isArray(requestData.weights) ? 'array' : typeof requestData.weights,
-      values_type: Array.isArray(requestData.values) ? 'array' : typeof requestData.values,
-      capacity_type: typeof requestData.capacity
-    });
-
     try {
-      const response = await fetch('http://localhost:8000/solve', {
+      const response = await fetch('/api/solve', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({
+          weights: items.map(item => item.weight),
+          values: items.map(item => item.value),
+          capacity: capacity,
+          solver_type: solverType,
+        }),
       });
 
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
       if (!response.ok) {
-        throw new Error(responseText || 'Failed to solve knapsack problem');
+        throw new Error(`Error: ${response.status}`);
       }
 
-      const solution = JSON.parse(responseText);
-      console.log('Parsed solution:', solution);
-      onSolutionFound(solution);
+      const data: KnapsackSolution = await response.json();
+      onSolutionFound(data);
     } catch (err) {
-      console.error('Error details:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Failed to solve knapsack problem:', err);
+      setError('Failed to solve the problem. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const generateRandomItems = () => {
+    const numItems = Math.floor(Math.random() * 5) + 5; // 5-10 items
+    const newItems: Item[] = [];
+    
+    for (let i = 0; i < numItems; i++) {
+      newItems.push({
+        id: i,
+        weight: Math.floor(Math.random() * 30) + 5, // 5-35
+        value: Math.floor(Math.random() * 150) + 50, // 50-200
+      });
+    }
+    
+    setItems(newItems);
+    setCapacity(Math.floor(Math.random() * 100) + 50); // 50-150
+  };
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white mb-6">Problem Parameters</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-400">
-            Item Weights (comma-separated)
-          </label>
-          <input
-            type="text"
-            name="weights"
-            value={formData.weights.join(',')}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 rounded-lg bg-black/30 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20"
-            placeholder="e.g., 2,3,4,5"
-            required
-          />
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={animatePresenceVariants}
+      className="flex flex-col gap-6"
+    >
+      <div className="flex flex-col gap-2">
+        <h2 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">
+          Knapsack Parameters
+        </h2>
+        <p className="text-sm text-gray-400">
+          Configure your problem instance below or generate a random one.
+        </p>
+      </div>
+
+      {/* Knapsack Capacity */}
+      <div className="glass-effect p-4 rounded-xl">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Knapsack Capacity
+        </label>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <NumberInput
+              value={capacity}
+              onChange={setCapacity}
+              min={1}
+              className="w-full"
+            />
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={generateRandomItems}
+            className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white py-2 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
+          >
+            Random
+          </motion.button>
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-400">
-            Item Values (comma-separated)
-          </label>
-          <input
-            type="text"
-            name="values"
-            value={formData.values.join(',')}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 rounded-lg bg-black/30 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20"
-            placeholder="e.g., 3,4,5,6"
-            required
-          />
-        </div>
-
-        <NumberInput
-          label="Knapsack Capacity"
-          name="capacity"
-          value={formData.capacity}
-          onChange={handleCapacityChange}
-          min={0}
-          step={0.1}
-          placeholder="e.g., 10"
-        />
-
+      {/* Solver Type */}
+      <div className="glass-effect p-4 rounded-xl solver-type-container">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Solver Type
+        </label>
         <Select
-          label="Solver Method"
-          name="solver_type"
-          value={formData.solver_type}
-          onChange={handleSelectChange}
-          options={solverOptions}
+          value={solverType}
+          onChange={(value) => setSolverType(value as SolverType)}
+          options={[
+            { value: 'all', label: 'Compare All' },
+            { value: 'dp', label: 'Dynamic Programming' },
+            { value: 'greedy', label: 'Greedy Algorithm' },
+            { value: 'ml', label: 'Machine Learning' },
+          ]}
+          className="w-full"
         />
+      </div>
 
-        <AnimatePresence>
-          {error && (
+      {/* Items */}
+      <div className="glass-effect p-4 rounded-xl">
+        <div className="flex justify-between items-center mb-4">
+          <label className="block text-sm font-medium text-gray-300">
+            Items ({items.length})
+          </label>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={addItem}
+            className="text-sm bg-white/10 hover:bg-white/20 text-white py-1 px-3 rounded-lg transition-all duration-200"
+          >
+            + Add Item
+          </motion.button>
+        </div>
+        
+        <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 pb-1">
+          {items.map((item, index) => (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="p-4 rounded-lg bg-red-900/20 border border-red-500/30 text-red-200"
+              key={item.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center gap-2 p-3 bg-black/30 rounded-lg group border border-white/5"
             >
-              {error}
+              <div className="relative w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-white text-xs shrink-0">
+                {index + 1}
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full"></span>
+              </div>
+              
+              <div className="flex-1 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Value</label>
+                  <NumberInput
+                    value={item.value}
+                    onChange={(value) => updateItemValue(item.id, value)}
+                    min={1}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Weight</label>
+                  <NumberInput
+                    value={item.weight}
+                    onChange={(value) => updateItemWeight(item.id, value)}
+                    min={1}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              
+              {items.length > 1 && (
+                <motion.button
+                  whileHover={{ scale: 1.1, color: '#ef4444' }}
+                  onClick={() => removeItem(item.id)}
+                  className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  aria-label="Remove item"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </motion.button>
+              )}
             </motion.div>
-          )}
-        </AnimatePresence>
+          ))}
+        </div>
+      </div>
 
+      {/* Solve Button */}
+      <div className="pt-2">
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          type="submit"
+          onClick={handleSolve}
           disabled={isLoading}
-          className={`w-full py-3 px-6 rounded-lg font-medium text-white
-            ${isLoading 
-              ? 'bg-gray-800 cursor-not-allowed' 
-              : 'bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 border border-white/10'
-            } transition-all duration-200`}
+          className="w-full btn-gradient flex items-center justify-center py-3 disabled:opacity-70"
         >
           {isLoading ? (
-            <div className="flex items-center justify-center">
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+            <>
+              <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
               Solving...
-            </div>
+            </>
           ) : (
             'Solve Knapsack Problem'
           )}
         </motion.button>
-      </form>
-    </div>
+
+        {error && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-2 text-red-500 text-sm"
+          >
+            {error}
+          </motion.p>
+        )}
+      </div>
+    </motion.div>
   );
 } 

@@ -25,6 +25,11 @@ export interface KnapsackSolution {
       solve_time?: number;
     };
   };
+  request?: {
+    weights: number[];
+    values: number[];
+    capacity: number;
+  };
 }
 
 export interface SolverResult {
@@ -32,5 +37,6 @@ export interface SolverResult {
   total_value: number;
   total_weight: number;
   is_feasible: boolean;
+  selection: number[];
   solve_time?: number;
 } 

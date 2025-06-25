@@ -9,8 +9,9 @@ interface NumberInputProps {
   step?: number;
   placeholder?: string;
   label?: string;
-  name: string;
+  name?: string;
   precision?: number;
+  className?: string;
 }
 
 export default function NumberInput({
@@ -18,36 +19,37 @@ export default function NumberInput({
   onChange,
   min = 0,
   max = Infinity,
-  step = 0.1,
+  step = 1,
   placeholder,
   label,
   name,
-  precision = 1
+  precision = 0,
+  className = ''
 }: NumberInputProps) {
-  const [localValue, setLocalValue] = useState(value.toFixed(precision));
+  const [localValue, setLocalValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    setLocalValue(value.toFixed(precision));
-  }, [value, precision]);
+    setLocalValue(value.toString());
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
     const numValue = parseFloat(newValue);
     if (!isNaN(numValue)) {
-      onChange(Number(numValue.toFixed(precision)));
+      onChange(Number(numValue));
     }
   };
 
   const increment = () => {
     const newValue = Math.min(max, value + step);
-    onChange(Number(newValue.toFixed(precision)));
+    onChange(Number(newValue));
   };
 
   const decrement = () => {
     const newValue = Math.max(min, value - step);
-    onChange(Number(newValue.toFixed(precision)));
+    onChange(Number(newValue));
   };
 
   const buttonVariants = {
@@ -57,26 +59,14 @@ export default function NumberInput({
   };
 
   return (
-    <div className="space-y-2">
-      <AnimatePresence>
-        {label && (
-          <motion.label
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="block text-sm font-medium text-gray-400"
-          >
-            {label}
-          </motion.label>
-        )}
-      </AnimatePresence>
+    <div className={`space-y-1 ${className}`}>
+      {label && (
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          {label}
+        </label>
+      )}
       
-      <motion.div
-        className="relative flex items-center"
-        animate={{ opacity: 1 }}
-        initial={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="relative flex items-center">
         <style jsx global>{`
           /* Hide browser arrows for number input */
           input[type=number]::-webkit-inner-spin-button,
@@ -89,11 +79,7 @@ export default function NumberInput({
           }
         `}</style>
 
-        <motion.div
-          className="relative flex-1"
-          animate={{ scale: isFocused ? 1.02 : 1 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-        >
+        <div className="relative flex-1">
           <input
             type="number"
             name={name}
@@ -105,15 +91,12 @@ export default function NumberInput({
             min={min}
             max={max}
             step={step}
-            className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/5 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all duration-300 pr-20"
+            className={`w-full px-3 py-2 rounded-lg bg-black/30 border ${
+              isFocused ? 'border-purple-500/50' : 'border-white/10'
+            } text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500/30 transition-all duration-200 pr-20`}
           />
           
-          <motion.div
-            className="absolute right-1 inset-y-1 flex"
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
+          <div className="absolute right-1 inset-y-1 flex">
             <motion.button
               variants={buttonVariants}
               initial="rest"
@@ -122,15 +105,9 @@ export default function NumberInput({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               type="button"
               onClick={decrement}
-              className="px-2 py-1 rounded-l-md bg-black/30 text-white border border-white/10 backdrop-blur-sm"
+              className="px-2 py-1 rounded-l-md bg-black/50 text-white border border-white/10 backdrop-blur-sm"
             >
-              <motion.span
-                initial={{ opacity: 0.7 }}
-                whileHover={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                −
-              </motion.span>
+              −
             </motion.button>
             
             <motion.button
@@ -141,19 +118,13 @@ export default function NumberInput({
               transition={{ duration: 0.2, ease: 'easeOut' }}
               type="button"
               onClick={increment}
-              className="px-2 py-1 rounded-r-md bg-black/30 text-white border-y border-r border-white/10 backdrop-blur-sm"
+              className="px-2 py-1 rounded-r-md bg-black/50 text-white border-y border-r border-white/10 backdrop-blur-sm"
             >
-              <motion.span
-                initial={{ opacity: 0.7 }}
-                whileHover={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                +
-              </motion.span>
+              +
             </motion.button>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 

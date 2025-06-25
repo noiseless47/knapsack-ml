@@ -1,184 +1,221 @@
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
 
-  const navItems = [
-    { href: '/', label: 'Solver' },
-    { href: '/docs', label: 'Documentation' },
-    { href: '/examples', label: 'Examples' },
-    { href: '/about', label: 'About' },
-  ];
-
-  const fadeInVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: { opacity: 1, y: 0 }
-  };
-
-  const mobileMenuVariants = {
-    closed: { 
-      height: 0,
-      opacity: 0,
-      transition: { 
-        duration: 0.3,
-        ease: 'easeInOut'
-      }
-    },
-    open: { 
-      height: 'auto',
-      opacity: 1,
-      transition: { 
-        duration: 0.3,
-        ease: 'easeInOut'
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setIsScrolled(true)
+      } else {
+        setIsScrolled(false)
       }
     }
-  };
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const navItems = [
+    { name: 'Home', path: '/' },
+    { name: 'Examples', path: '/examples' },
+    { name: 'Docs', path: '/docs' },
+    { name: 'About', path: '/about' },
+    { name: 'Research', path: '/about/research' },
+  ]
+
+  const logoVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.5 } }
+  }
+
+  const navItemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: (i: number) => ({ 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        delay: 0.1 * i,
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    })
+  }
+
+  const mobileMenuVariants = {
+    closed: { opacity: 0, scale: 0.95, y: -10 },
+    open: { opacity: 1, scale: 1, y: 0 }
+  }
 
   return (
-    <motion.nav
-      initial="hidden"
-      animate="visible"
-      variants={fadeInVariants}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/5"
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-black/80 backdrop-blur-lg shadow-lg shadow-purple-500/5 border-b border-white/10' 
+          : 'bg-transparent'
+      }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="text-xl font-bold text-white"
-            >
-              Knapsack<span className="text-gray-400">ML</span>
-            </motion.div>
-          </Link>
+          <motion.div 
+            variants={logoVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex items-center"
+          >
+            <Link href="/" className="flex items-center gap-2">
+              <div className="relative w-8 h-8">
+                <motion.div 
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                    rotate: [0, 5, 0, -5, 0]
+                  }}
+                  transition={{ 
+                    repeat: Infinity,
+                    duration: 5, 
+                    ease: "easeInOut"
+                  }}
+                ></motion.div>
+                <div className="absolute inset-1 rounded-full bg-black flex items-center justify-center text-white font-bold">
+                  K
+                </div>
+              </div>
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">
+                Knapsack<span className="text-white">ML</span>
+              </span>
+            </Link>
+          </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item, index) => (
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item, i) => (
               <motion.div
-                key={item.href}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.3, ease: 'easeOut' }}
+                key={item.name}
+                custom={i}
+                variants={navItemVariants}
+                initial="hidden"
+                animate="visible"
               >
-                <Link
-                  href={item.href}
-                  className="text-gray-300 hover:text-white transition-colors duration-300"
+                <Link 
+                  href={item.path}
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    pathname === item.path
+                      ? 'text-white'
+                      : 'text-gray-300 hover:text-white'
+                  }`}
                 >
-                  <motion.span
-                    whileHover={{ y: -1 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="relative inline-block"
-                  >
-                    {item.label}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-white/50"
-                      whileHover={{ width: '100%' }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                  {item.name}
+                  {pathname === item.path && (
+                    <motion.div
+                      layoutId="navbar-active"
+                      className="absolute bottom-0 left-0 right-0 h-full rounded-lg bg-white/10"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
                     />
-                  </motion.span>
+                  )}
                 </Link>
               </motion.div>
             ))}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.3 }}
-            className="md:hidden"
-          >
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-400 hover:text-white transition-colors duration-300"
+            <motion.div
+              variants={navItemVariants}
+              custom={navItems.length}
+              initial="hidden"
+              animate="visible"
             >
-              <motion.svg
-                animate={isOpen ? "open" : "closed"}
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+              <Link 
+                href="https://github.com/noiseless47/knapsack-ml" 
+                target="_blank"
+                className="ml-2 btn-gradient"
               >
-                <AnimatePresence mode="wait">
-                  {isOpen ? (
-                    <motion.path
-                      key="close"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      exit={{ pathLength: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <motion.path
-                      key="menu"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      exit={{ pathLength: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </AnimatePresence>
-              </motion.svg>
-            </motion.button>
-          </motion.div>
+                Try it now
+              </Link>
+            </motion.div>
+          </nav>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="flex items-center px-3 py-2 border rounded border-white/20 text-gray-200 hover:text-white hover:border-white"
+              aria-label="Toggle menu"
+            >
+              <svg 
+                className="w-5 h-5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                {isMobileMenuOpen ? (
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial="closed"
-            animate="open"
-            exit="closed"
-            variants={mobileMenuVariants}
-            className="md:hidden overflow-hidden bg-black/30 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="px-2 pt-2 pb-3 space-y-1"
-            >
-              {navItems.map((item, index) => (
-                <motion.div
-                  key={item.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: index * 0.1, duration: 0.2 }}
+      {/* Mobile menu */}
+      <motion.div
+        className="md:hidden"
+        initial="closed"
+        animate={isMobileMenuOpen ? "open" : "closed"}
+        variants={mobileMenuVariants}
+        transition={{ duration: 0.2 }}
+      >
+        {isMobileMenuOpen && (
+          <div className="px-4 py-3 glass-effect mx-4 my-2 mb-4">
+            <nav className="flex flex-col gap-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                    pathname === item.path
+                      ? 'bg-white/10 text-white'
+                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <Link
-                    href={item.href}
-                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-md transition-all duration-300"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                </motion.div>
+                  {item.name}
+                </Link>
               ))}
-            </motion.div>
-          </motion.div>
+              <Link 
+                href="https://github.com/noiseless47/knapsack-ml" 
+                target="_blank"
+                className="mt-2 btn-gradient text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Try it now
+              </Link>
+            </nav>
+          </div>
         )}
-      </AnimatePresence>
-    </motion.nav>
-  );
+      </motion.div>
+    </motion.header>
+  )
 } 

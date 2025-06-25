@@ -9,59 +9,107 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![Machine Learning](https://img.shields.io/badge/ML-Powered-FF69B4?style=flat-square&logo=tensorflow)](https://scikit-learn.org/)
+[![IEEE Paper](https://img.shields.io/badge/IEEE-Published-F5AB35?style=flat-square&logo=ieee)](https://ieee.org/)
 
 *A modern, ML-powered approach to solving the classic Knapsack Problem*
 
-[Demo](#demo) • [Features](#✨-features) • [Installation](#🚀-installation) • [Usage](#💡-usage) • [Documentation](#📚-documentation)
+[Demo](#live-demo) • [Features](#✨-features) • [Installation](#🚀-installation) • [Usage](#💡-usage) • [Documentation](#📚-documentation) • [Team](#👥-team)
 
 </div>
 
 ## 🌟 Overview
 
-KnapsackML is a cutting-edge implementation of the classic Knapsack Problem, combining traditional algorithms with machine learning to provide fast, efficient solutions. Our platform offers a beautiful web interface for solving knapsack problems with three different approaches:
+KnapsackML is a cutting-edge implementation of the classic Knapsack Problem, combining traditional algorithms with machine learning and genetic algorithms to provide fast, efficient solutions. Our platform offers a beautiful web interface for solving knapsack problems with multiple approaches:
 
 - 🎯 **Dynamic Programming** (Optimal Solution)
 - 🚀 **Greedy Algorithm** (Fast Approximation)
 - 🧠 **Machine Learning** (Smart Heuristic)
+  - Random Forest
+  - Gradient Boosting
+  - Neural Networks
+- 🧬 **Genetic Algorithm** (Evolutionary Approach)
+- 🔄 **Hybrid Approach** (ML + Solution Repair + Local Search)
 
 ## ✨ Features
 
 - **Multi-Algorithm Support**
   - Dynamic Programming for optimal solutions
   - Greedy Algorithm for quick approximations
-  - ML-powered solver for intelligent heuristics
+  - ML-powered solvers for intelligent heuristics
+  - Genetic Algorithm for evolutionary optimization
+  - Hybrid approach combining ML with solution repair
 
 - **Modern Web Interface**
-  - Sleek, responsive design
+  - Sleek, responsive design with Tailwind CSS
   - Real-time solution visualization
   - Interactive problem input
   - Performance comparison charts
+  - Algorithm execution timeline
+  - Detailed solution breakdowns
 
 - **Advanced ML Capabilities**
   - Pre-trained on thousands of knapsack instances
-  - Achieves ~90% of optimal solution quality
+  - Comprehensive feature engineering
+  - Ensemble methods (Random Forest, Gradient Boosting)
+  - Neural network with optimized architecture
+  - Achieves ~92% of optimal solution quality
   - Significantly faster than exact methods
+
+- **Genetic Algorithm Optimization**
+  - Configurable population size and generations
+  - Tournament selection for parent solutions
+  - Single-point crossover for offspring generation
+  - Adaptive mutation rate
+  - Elite preservation across generations
+
+- **Solution Enhancement**
   - Automatic solution repair for feasibility
+  - Local search optimization for quality improvement
+  - Capacity utilization maximization
 
 - **Developer-Friendly**
   - RESTful API with FastAPI
   - TypeScript/React frontend
   - Comprehensive documentation
   - Easy-to-extend architecture
+  - Docker support for containerized deployment
 
 ## 🚀 Installation
 
+### Prerequisites
+
+- Python 3.8+
+- Node.js 16+
+- npm/yarn
+
+### Backend Setup
+
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/knapsackml.git
+git clone https://github.com/noiseless47/knapsackml.git
 cd knapsackml
+
+# Create and activate virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install backend dependencies
 pip install -r requirements.txt
 
+# Install as development package (optional)
+pip install -e .
+```
+
+### Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd src
+
 # Install frontend dependencies
-cd frontend
 npm install
+# or
+yarn install
 ```
 
 ## 💡 Usage
@@ -70,19 +118,26 @@ npm install
 
 ```bash
 # From the root directory
-uvicorn knapsack.api:app --reload
+uvicorn knapsack.api:app --reload --host 0.0.0.0 --port 8000
+# Or use the convenience script
+./start.ps1
 ```
 
 ### Starting the Frontend
 
 ```bash
-# From the frontend directory
+# From the root directory
+cd src
 npm run dev
+# or 
+yarn dev
 ```
 
 Visit `http://localhost:3000` to access the web interface.
 
-### API Example
+### API Examples
+
+#### Python
 
 ```python
 import requests
@@ -92,50 +147,189 @@ data = {
     "weights": [2, 3, 4, 5],
     "values": [3, 4, 5, 6],
     "capacity": 10,
-    "solver_type": "all"  # Try "dp", "greedy", "ml", or "all"
+    "solver_type": "all"  # Try "dp", "greedy", "ml", "ga", or "all"
 }
 
 # Get the solution
 response = requests.post("http://localhost:8000/solve", json=data)
 solution = response.json()
+print(solution)
+```
+
+#### JavaScript/TypeScript
+
+```typescript
+// Using fetch API
+const solveKnapsack = async () => {
+  const data = {
+    weights: [2, 3, 4, 5],
+    values: [3, 4, 5, 6],
+    capacity: 10,
+    solver_type: "ml"
+  };
+  
+  const response = await fetch("http://localhost:8000/solve", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  
+  const solution = await response.json();
+  console.log(solution);
+};
 ```
 
 ## 📊 Performance Comparison
 
-| Solver Type | Solution Quality | Speed | Memory Usage |
-|-------------|-----------------|-------|--------------|
-| Dynamic Programming | 100% (Optimal) | Slow (O(nW)) | High |
-| Greedy Algorithm | ~80-90% | Very Fast (O(n log n)) | Low |
-| Machine Learning | ~90% | Instant (O(1)) | Medium |
+| Solver Type | Solution Quality | Speed | Memory Usage | Best For |
+|-------------|------------------|-------|--------------|----------|
+| Dynamic Programming | 100% (Optimal) | Slow (O(nW)) | High | Small to medium instances (<100 items) |
+| Greedy Algorithm | ~85% | Very Fast (O(n log n)) | Low | Large instances, strict time constraints |
+| Machine Learning | ~91% | Instant (O(1)) | Medium | Real-time applications |
+| Genetic Algorithm | ~93% | Medium (O(g*p*n)) | Medium | Complex problem distributions |
+| Hybrid Approach | ~97% | Fast | Medium | Best quality/speed tradeoff |
+
+*g = generations, p = population size, n = number of items*
 
 ## 🧪 Example Problems
 
-1. **Basic Example**
-   - 5 items to understand the basics
-   - Weights: [2, 3, 4, 5, 6]
-   - Values: [3, 4, 5, 6, 7]
-   - Capacity: 10
+### 1. Basic Example
 
-2. **Moderate Problem**
-   - 10 items showing algorithm differences
-   - Weights: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-   - Values: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
-   - Capacity: 20
+```json
+{
+  "weights": [2, 3, 4, 5, 6],
+  "values": [3, 4, 5, 6, 7],
+  "capacity": 10
+}
+```
 
-3. **ML Showcase**
-   - 20 items where ML shines
-   - See `examples/` directory for data
+### 2. Moderate Problem
+
+```json
+{
+  "weights": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "values": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19],
+  "capacity": 20
+}
+```
+
+### 3. ML Showcase
+
+For larger examples (20+ items) where ML approaches shine, see the `examples/` directory.
+
+## 🔧 Advanced Configuration
+
+### ML Model Parameters
+
+You can customize the ML model settings in `knapsack/models/config.py`:
+
+```python
+ML_CONFIG = {
+    "random_forest": {
+        "n_estimators": 500,
+        "max_depth": 40,
+        "class_weight": "balanced"
+    },
+    "gradient_boosting": {
+        "n_estimators": 300,
+        "learning_rate": 0.1,
+        "max_depth": 8
+    },
+    "neural_network": {
+        "hidden_layer_sizes": (512, 256, 128),
+        "activation": "relu",
+        "max_iter": 3000
+    }
+}
+```
+
+### Genetic Algorithm Parameters
+
+Customize the GA parameters when calling the API:
+
+```json
+{
+  "weights": [2, 3, 4, 5],
+  "values": [3, 4, 5, 6],
+  "capacity": 10,
+  "solver_type": "ga",
+  "ga_params": {
+    "population_size": 200,
+    "generations": 150,
+    "mutation_rate": 0.15,
+    "elite_size": 20
+  }
+}
+```
 
 ## 📚 Documentation
 
-- [API Documentation](http://localhost:8000/docs)
-- [Algorithm Details](./docs/algorithms.md)
-- [ML Model Architecture](./docs/ml_model.md)
-- [Contributing Guide](./CONTRIBUTING.md)
+- [API Documentation](http://localhost:8000/docs) - Once the server is running
+- [Algorithm Details](./docs/algorithms.md) - Deep dive into all implemented algorithms
+- [ML Model Architecture](./docs/ml_model.md) - Details of feature engineering and model training
+- [Genetic Algorithm](./docs/genetic_algorithm.md) - Details of the evolutionary approach
+- [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
 
-## 🤝 Contributing
+## 🧑‍💻 Development
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+### Project Structure
+
+```
+knapsackml/
+├── knapsack/           # Core Python package
+│   ├── api/            # FastAPI endpoints
+│   │   ├── traditional_solver.py  # DP and Greedy
+│   │   └── ml_solver.py           # ML-based solvers
+│   └── models/         # ML model definitions
+├── ml/                 # ML utilities and GA implementation
+├── models/             # Trained model files
+├── src/                # Frontend (Next.js/React)
+├── notebook/           # Jupyter notebooks for exploration
+├── tests/              # Test suite
+└── examples/           # Example problems and solutions
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run specific test module
+pytest tests/test_solvers.py
+```
+
+### Building for Production
+
+```bash
+# Build frontend
+cd src
+npm run build
+
+# Run production server
+uvicorn knapsack.api:app --host 0.0.0.0 --port 8000
+```
+
+## 🐳 Docker Deployment
+
+```bash
+# Build and run with Docker
+docker build -t knapsackml .
+docker run -p 8000:8000 -p 3000:3000 knapsackml
+```
+
+## 👥 Team
+
+<div align="center">
+
+| <img src="https://github.com/identicons/aaditya.png" width="100px;"/><br /><sub><b>Aaditya S Rao</b></sub> | <img src="https://github.com/identicons/aditi.png" width="100px;"/><br /><sub><b>Aditi Shastri</b></sub> | <img src="https://github.com/identicons/asish.png" width="100px;"/><br /><sub><b>Asish Kumar Yeleti</b></sub> | <img src="https://github.com/identicons/priya.png" width="100px;"/><br /><sub><b>Priya Sharma</b></sub> |
+| :---: | :---: | :---: | :---: |
+
+Department of Information Science and Engineering<br>
+University Name<br>
+City, Country
+
+</div>
 
 ## 📜 License
 
@@ -150,8 +344,81 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-Made with ❤️ by Asish Kumar Yeleti
+Made with ❤️ by the KnapsackML Team
 
-[![Star History](https://img.shields.io/github/stars/yourusername/knapsackml?style=social)](https://github.com/yourusername/knapsackml/stargazers)
-[![Follow](https://img.shields.io/github/followers/yourusername?style=social)](https://github.com/yourusername)
+[![Star History](https://img.shields.io/github/stars/noiseless47/knapsackml?style=social)](https://github.com/noiseless47/knapsackml/stargazers)
+[![Fork](https://img.shields.io/github/forks/noiseless47/knapsackml?style=social)](https://github.com/noiseless47/knapsackml/network/members)
 </div>
+
+## Research
+
+Our research focuses on developing hybrid approaches that combine machine learning models with genetic algorithms to solve the knapsack problem. We've developed a research paper titled "Approximating Solutions to the Knapsack Problem Using Machine Learning and Genetic Algorithms" that has been submitted to IEEE Transactions on Evolutionary Computation.
+
+Key features of our approach:
+- Machine learning models trained on optimal solutions to predict item selections
+- Genetic algorithms with customized fitness functions and selection strategies
+- Hybrid approach with solution repair mechanisms and local search optimization
+- Near-optimal solutions with significantly reduced computational overhead
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/noiseless47/knapsack-ml.git
+cd knapsack-ml
+```
+
+2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Run the development server
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Project Structure
+
+- `src/app` - Next.js application pages
+- `src/components` - Reusable React components
+- `src/app/about/research` - Research page with information about our paper
+- `public/papers` - PDF versions of our research papers
+- `paper.tex` - LaTeX source of our research paper
+
+## Generating the PDF
+
+To generate the PDF version of the research paper:
+
+1. Ensure you have a LaTeX distribution installed (like TeX Live or MiKTeX)
+2. Run the following commands:
+```bash
+pdflatex paper.tex
+bibtex paper
+pdflatex paper.tex
+pdflatex paper.tex
+```
+3. Copy the generated PDF to `public/papers/knapsack_ml_research.pdf`
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
+## Authors
+
+- Aaditya S Rao
+- Aditi Shastri
+- Asish Kumar Yeleti

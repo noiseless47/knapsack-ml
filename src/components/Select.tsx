@@ -11,7 +11,8 @@ interface SelectProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   label?: string;
-  name: string;
+  name?: string;
+  className?: string;
 }
 
 export default function Select<T extends string>({
@@ -19,12 +20,14 @@ export default function Select<T extends string>({
   value,
   onChange,
   label,
-  name
+  name,
+  className = ''
 }: SelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const option = options.find(opt => opt.value === value);
@@ -56,140 +59,107 @@ export default function Select<T extends string>({
       opacity: 0,
       y: -10,
       scale: 0.95,
-      transition: {
-        duration: 0.2,
-        ease: 'easeInOut'
-      }
     },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: {
-        duration: 0.3,
-        ease: 'easeOut'
-      }
     },
     exit: {
       opacity: 0,
       y: -10,
       scale: 0.95,
-      transition: {
-        duration: 0.2,
-        ease: 'easeInOut'
-      }
     }
   };
 
-  const optionVariants = {
-    hidden: { opacity: 0, x: -10 },
-    visible: (i: number) => ({
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: i * 0.05,
-        duration: 0.3,
-        ease: 'easeOut'
-      }
-    }),
-    exit: { opacity: 0, x: -10 }
-  };
-
   return (
-    <div className="space-y-2" ref={containerRef}>
+    <div className={`relative ${className}`} ref={containerRef}>
+      {label && (
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          {label}
+        </label>
+      )}
+
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setIsFocused(!isOpen);
+        }}
+        className={`
+          w-full px-3 py-2 rounded-lg border text-white
+          transition-all duration-200 flex items-center justify-between
+          ${isFocused
+            ? 'bg-black/30 border-purple-500/50 ring-1 ring-purple-500/30'
+            : 'bg-black/30 border-white/10 hover:bg-black/40'
+          }
+        `}
+      >
+        <span className="block truncate">{selectedLabel}</span>
+        <motion.svg
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="w-5 h-5 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </motion.svg>
+      </button>
+
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-transparent"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       <AnimatePresence>
-        {label && (
-          <motion.label
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="block text-sm font-medium text-gray-400"
+        {isOpen && (
+          <motion.div
+            variants={dropdownVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.2 }}
+            className="absolute top-full left-0 right-0 z-[9999] mt-1 bg-black/90 border border-purple-500/20 rounded-lg shadow-xl overflow-hidden backdrop-blur-lg shadow-purple-500/5"
+            style={{ 
+              minWidth: '100%',
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}
           >
-            {label}
-          </motion.label>
+            <div className="py-1">
+              {options.map((option, index) => (
+                <motion.button
+                  key={option.value}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  onClick={() => handleSelect(option.value)}
+                  className={`
+                    w-full px-4 py-2 text-left text-white transition-all duration-200
+                    ${option.value === value
+                      ? 'bg-purple-500/20 text-white'
+                      : 'hover:bg-white/5 text-gray-300 hover:text-white'
+                    }
+                  `}
+                >
+                  {option.label}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
-
-      <motion.div
-        className="relative"
-        animate={{ scale: isFocused ? 1.02 : 1 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-      >
-        <motion.button
-          type="button"
-          onClick={() => {
-            setIsOpen(!isOpen);
-            setIsFocused(!isOpen);
-          }}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => !isOpen && setIsFocused(false)}
-          className={`
-            w-full px-4 py-2 rounded-lg border text-white
-            transition-all duration-300 flex items-center justify-between
-            ${isFocused
-              ? 'bg-black/30 border-white/20 ring-1 ring-white/20'
-              : 'bg-black/20 border-white/5 hover:bg-black/25'
-            }
-          `}
-        >
-          <span className="block truncate">{selectedLabel}</span>
-          <motion.svg
-            animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className={`w-5 h-5 transition-colors duration-300 ${
-              isFocused ? 'text-white' : 'text-gray-500'
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </motion.svg>
-        </motion.button>
-
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              variants={dropdownVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="absolute z-10 w-full mt-1 bg-black/90 border border-white/10 rounded-lg shadow-xl overflow-hidden backdrop-blur-lg"
-            >
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="max-h-60 overflow-auto"
-              >
-                {options.map((option, index) => (
-                  <motion.button
-                    key={option.value}
-                    custom={index}
-                    variants={optionVariants}
-                    onClick={() => handleSelect(option.value)}
-                    className={`
-                      w-full px-4 py-2 text-left text-white transition-all duration-300
-                      ${option.value === value
-                        ? 'bg-white/10'
-                        : 'hover:bg-white/5'
-                      }
-                    `}
-                  >
-                    {option.label}
-                  </motion.button>
-                ))}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-      <input type="hidden" name={name} value={value} />
+      {name && <input type="hidden" name={name} value={value} />}
     </div>
   );
 } 
