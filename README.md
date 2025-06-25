@@ -326,8 +326,8 @@ docker run -p 8000:8000 -p 3000:3000 knapsackml
 | :---: | :---: | :---: |
 
 Department of Information Science and Engineering<br>
-University Name<br>
-City, Country
+R. V. College Of Engineering<br>
+Bengaluru, India
 
 </div>
 
