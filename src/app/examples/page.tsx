@@ -202,11 +202,11 @@ export default function Examples() {
               </motion.div>
 
               {/* Solution Area */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-[0.9fr,1.1fr] gap-8">
                 {/* Solver Form */}
                 <motion.div
                   variants={itemVariants}
-                  className="glass-effect p-6 rounded-xl"
+                  className="glass-effect p-6"
                 >
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-semibold text-gradient">
@@ -233,7 +233,7 @@ export default function Examples() {
                 {/* Results */}
                 <motion.div
                   variants={itemVariants}
-                  className="glass-effect p-6 rounded-xl"
+                  className="glass-effect p-6"
                 >
                   {solution ? (
                     <ResultsVisualization solution={solution} />
