@@ -87,7 +87,9 @@ export default function KnapsackSolver({
     setError(null);
 
     try {
-      const response = await fetch('/api/solve', {
+      // Change API endpoint to use the actual Python backend
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/solve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

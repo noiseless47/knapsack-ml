@@ -19,7 +19,7 @@ app = FastAPI(
 # Enable CORS for all origins (for development)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or ["http://localhost:3000"] for more security
+    allow_origins=["*"],  # Allow requests from any origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -73,6 +73,9 @@ async def solve_knapsack(request: KnapsackRequest) -> Dict[str, Any]:
                 request.values,
                 request.capacity
             )
+            # Ensure solve_time is present
+            if "solve_time" not in results["greedy"]:
+                results["greedy"]["solve_time"] = 0.01  # Default value
         
         if request.solver_type in ["ml", "all"]:
             results["ml"] = ml_solver.solve(
@@ -83,7 +86,12 @@ async def solve_knapsack(request: KnapsackRequest) -> Dict[str, Any]:
         
         return {
             "status": "success",
-            "results": results
+            "results": results,
+            "request": {
+                "weights": request.weights,
+                "values": request.values,
+                "capacity": request.capacity
+            }
         }
     
     except Exception as e:

@@ -11,18 +11,34 @@ interface ResultsVisualizationProps {
 export default function ResultsVisualization({ solution }: ResultsVisualizationProps) {
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string | null>(null);
   
-  // Find the best solution by total value
+  // Find the best algorithm by value and time
   const algorithms = Object.keys(solution.results);
-  const bestAlgorithm = algorithms.reduce((best, current) => {
+  
+  // Find best value algorithm
+  const bestValueAlgorithm = algorithms.reduce((best, current) => {
     const bestResult = solution.results[best];
     const currentResult = solution.results[current];
     return currentResult.total_value > bestResult.total_value ? current : best;
   }, algorithms[0]);
+  
+  // Find best time algorithm (fastest)
+  const bestTimeAlgorithm = algorithms.reduce((best, current) => {
+    const bestResult = solution.results[best];
+    const currentResult = solution.results[current];
+    
+    // If current algorithm has no solve_time, it can't be the fastest
+    if (!currentResult.solve_time) return best;
+    
+    // If best algorithm has no solve_time, current is better
+    if (!bestResult.solve_time) return current;
+    
+    return currentResult.solve_time < bestResult.solve_time ? current : best;
+  }, algorithms[0]);
 
-  // Set the initially selected algorithm to be the best one
+  // Set the initially selected algorithm to be the best value one
   useState(() => {
     if (!selectedAlgorithm) {
-      setSelectedAlgorithm(bestAlgorithm);
+      setSelectedAlgorithm(bestValueAlgorithm);
     }
   });
 
@@ -92,7 +108,8 @@ export default function ResultsVisualization({ solution }: ResultsVisualizationP
       <div className="glass-effect overflow-hidden rounded-xl">
         <div className="flex overflow-x-auto scrollbar-hide">
           {algorithms.map((algo) => {
-            const isBest = algo === bestAlgorithm;
+            const isBestValue = algo === bestValueAlgorithm;
+            const isBestTime = algo === bestTimeAlgorithm;
             const isSelected = algo === selectedAlgorithm;
             
             return (
@@ -111,14 +128,27 @@ export default function ResultsVisualization({ solution }: ResultsVisualizationP
                   Value: {solution.results[algo].total_value}
                 </div>
                 
-                {isBest && (
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                    className="absolute top-1 right-1 w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
-                  />
-                )}
+                {/* Show indicators for best value and best time */}
+                <div className="absolute top-1 right-1 flex gap-1">
+                  {isBestValue && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                      title="Best Value"
+                      className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
+                    />
+                  )}
+                  {isBestTime && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                      title="Fastest Solver"
+                      className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-teal-500"
+                    />
+                  )}
+                </div>
                 
                 {isSelected && (
                   <motion.div 
@@ -257,7 +287,8 @@ export default function ResultsVisualization({ solution }: ResultsVisualizationP
             <tbody>
               {algorithms.map((algo, idx) => {
                 const result = solution.results[algo];
-                const isBest = algo === bestAlgorithm;
+                const isBestValue = algo === bestValueAlgorithm;
+                const isBestTime = algo === bestTimeAlgorithm;
                 
                 return (
                   <motion.tr 
@@ -267,21 +298,28 @@ export default function ResultsVisualization({ solution }: ResultsVisualizationP
                     transition={{ duration: 0.3, delay: idx * 0.1 }}
                     className={`
                       border-b border-white/5 hover:bg-white/5 cursor-pointer
-                      ${isBest ? 'bg-white/5' : ''}
+                      ${isBestValue || isBestTime ? 'bg-white/5' : ''}
                     `}
                     onClick={() => setSelectedAlgorithm(algo)}
                   >
                     <td className="p-2 relative">
-                      {isBest && (
+                      {/* Show colored indicators for best value and best time */}
+                      {isBestValue && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500"></div>
+                      )}
+                      {isBestTime && !isBestValue && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                      )}
+                      {isBestTime && isBestValue && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-green-500"></div>
                       )}
                       <div className="font-medium text-sm">
                         {formatAlgorithmName(algo)}
                       </div>
                     </td>
                     <td className="p-2 font-medium text-sm">
-                      {isBest ? (
-                        <span className="text-gradient">
+                      {isBestValue ? (
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">
                           {result.total_value}
                         </span>
                       ) : result.total_value}
@@ -289,7 +327,11 @@ export default function ResultsVisualization({ solution }: ResultsVisualizationP
                     <td className="p-2 text-sm">{result.total_weight}</td>
                     <td className="p-2 text-sm">{result.selected_items.length}</td>
                     <td className="p-2 text-sm">
-                      {result.solve_time ? `${result.solve_time.toFixed(3)}s` : 'N/A'}
+                      {result.solve_time ? 
+                        <span className={isBestTime ? "bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-500" : ""}>
+                          {result.solve_time.toFixed(3)}s
+                        </span> 
+                        : 'N/A'}
                     </td>
                   </motion.tr>
                 );

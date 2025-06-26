@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { KnapsackRequest, KnapsackSolution } from "@/types/knapsack";
 
+// **************************************************************************
+// THIS IS A MOCK IMPLEMENTATION AND SHOULDN'T BE USED IN PRODUCTION
+// PLEASE USE THE ACTUAL PYTHON BACKEND API INSTEAD
+// THE FRONTEND NOW CONNECTS DIRECTLY TO THE BACKEND API AT http://localhost:8000
+// **************************************************************************
+
 // Mock implementation of the knapsack solvers
 function solveDynamicProgramming(weights: number[], values: number[], capacity: number) {
   const n = weights.length;
