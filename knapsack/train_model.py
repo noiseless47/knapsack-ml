@@ -425,21 +425,21 @@ def train_and_evaluate_models(train_data_path: str, val_data_path: str):
     # Train Random Forest model
     rf_model = KnapsackMLModel(model_type="rf")
     rf_metrics = rf_model.train(train_data, val_data)
-    rf_model.save('models/rf_model.pkl')
+    rf_model.save('knapsack/models/rf_model.pkl')
     metrics["random_forest"] = rf_metrics
     models["random_forest"] = rf_model
     
     # Train Gradient Boosting model
     gb_model = KnapsackMLModel(model_type="gb")
     gb_metrics = gb_model.train(train_data, val_data)
-    gb_model.save('models/gb_model.pkl')
+    gb_model.save('knapsack/models/gb_model.pkl')
     metrics["gradient_boosting"] = gb_metrics
     models["gradient_boosting"] = gb_model
     
     # Train Neural Network model
     mlp_model = KnapsackMLModel(model_type="mlp")
     mlp_metrics = mlp_model.train(train_data, val_data)
-    mlp_model.save('models/mlp_model.pkl')
+    mlp_model.save('knapsack/models/mlp_model.pkl')
     metrics["neural_network"] = mlp_metrics
     models["neural_network"] = mlp_model
     
@@ -448,10 +448,10 @@ def train_and_evaluate_models(train_data_path: str, val_data_path: str):
     best_model = models[best_model_name]
     
     # Save the best model as the default model
-    best_model.save('models/best_model.pkl')
+    best_model.save('knapsack/models/best_model.pkl')
     
     # Save metrics
-    with open('models/training_metrics.json', 'w') as f:
+    with open('knapsack/models/training_metrics.json', 'w') as f:
         json.dump(metrics, f, indent=2)
     
     print("\nTraining complete! Final metrics:")
@@ -461,4 +461,4 @@ def train_and_evaluate_models(train_data_path: str, val_data_path: str):
     return best_model
 
 if __name__ == "__main__":
-    train_and_evaluate_models('data/train_data.csv', 'data/val_data.csv')
+    train_and_evaluate_models('knapsack/data/train_data.csv', 'knapsack/data/val_data.csv') 
