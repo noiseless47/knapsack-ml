@@ -87,6 +87,9 @@ env/
 *.mlmodel
 models/
 */models/
+data/
+*/data/
+*.csv
 *.parquet
 *.feather
 *.arrow
