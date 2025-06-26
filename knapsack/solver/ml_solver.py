@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Tuple
-from knapsack.models.train_model import KnapsackMLModel
+from knapsack.train_model import KnapsackMLModel
 import time
 import warnings
 import logging
