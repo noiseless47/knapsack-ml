@@ -51,18 +51,16 @@ class MLKnapsackSolver:
         """
         start_time = time.time()
         
-        # If ML model failed to load or for small problems, use traditional solvers
-        if self.model is None or len(weights) <= 15:
-            # For small problems, DP is fast and optimal
-            if len(weights) <= 30:  # Increased threshold for DP solver
-                try:
-                    dp_solution = self.dp_solver.solve(weights, values, capacity)
-                    dp_solution['solve_time'] = time.time() - start_time
-                    return dp_solution
-                except Exception as e:
-                    logger.warning(f"DP solver failed: {str(e)}. Falling back to greedy.")
+        # If ML model failed to load, use traditional solvers
+        if self.model is None:
+            try:
+                dp_solution = self.dp_solver.solve(weights, values, capacity)
+                dp_solution['solve_time'] = time.time() - start_time
+                return dp_solution
+            except Exception as e:
+                logger.warning(f"DP solver failed: {str(e)}. Falling back to greedy.")
             
-            # If DP fails or problem is too large, use greedy
+            # If DP fails, use greedy
             greedy_solution = self.greedy_solver.solve(weights, values, capacity)
             greedy_solution['solve_time'] = time.time() - start_time
             return greedy_solution
@@ -83,12 +81,74 @@ class MLKnapsackSolver:
             
             # Safely handle top k ratios when n_items < 5
             n_ratios = min(n_items, 5)  # Use at most 5 or as many as available
-            best_ratios = sorted_ratios[:n_ratios].tolist()  # Best k ratios
-            worst_ratios = sorted_ratios[-(n_ratios):].tolist()  # Worst k ratios
+            
+            # Extra safety: Ensure we have at least one ratio
+            if len(value_weight_ratios) > 0:
+                sorted_ratios = np.sort(value_weight_ratios)[::-1]  # Sort descending
+                best_ratios = sorted_ratios[:n_ratios].tolist()  # Best k ratios
+                worst_ratios = sorted_ratios[max(-n_ratios, -len(sorted_ratios)):].tolist()  # Worst k ratios
+            else:
+                best_ratios = []
+                worst_ratios = []
             
             # Pad ratios arrays to always have 5 elements
             best_ratios = best_ratios + [0.0] * (5 - len(best_ratios))
             worst_ratios = worst_ratios + [0.0] * (5 - len(worst_ratios))
+            
+            # Get top 5 weights and values (same as in train_model.py)
+            sorted_weights = np.sort(weights)
+            sorted_values = np.sort(values)[::-1]  # Sort values descending
+            
+            # Be extra careful with small arrays
+            top_weights = sorted_weights[-min(5, len(sorted_weights)):].tolist()
+            top_weights = [0.0] * (5 - len(top_weights)) + top_weights
+            
+            top_values = sorted_values[:min(5, len(sorted_values))].tolist()
+            top_values = top_values + [0.0] * (5 - len(top_values))
+            
+            # Calculate additional features matching those in train_model.py
+            total_weight = float(np.sum(weights))
+            total_value = float(np.sum(values))
+            capacity_ratio = float(capacity / total_weight if total_weight > 0 else 1.0)
+            avg_weight = float(np.mean(weights))
+            avg_value = float(np.mean(values))
+            weight_variance = float(np.var(weights))
+            value_variance = float(np.var(values))
+            
+            # Calculate knapsack density (how many items can fit on average)
+            density = float(capacity / avg_weight if avg_weight > 0 else n_items)
+            
+            # Calculate potential value density (value per capacity unit)
+            value_density = float(total_value / capacity if capacity > 0 else total_value)
+            
+            # Calculate correlation between weights and values - safely
+            try:
+                if n_items > 1:
+                    correlation = float(np.corrcoef(weights, values)[0, 1])
+                else:
+                    correlation = 0.0
+            except:
+                correlation = 0.0
+            
+            # Calculate weight and value skewness
+            try:
+                weight_skew = float(self._calculate_skewness(weights))
+                value_skew = float(self._calculate_skewness(values))
+                ratio_skew = float(self._calculate_skewness(value_weight_ratios))
+            except:
+                weight_skew = 0.0
+                value_skew = 0.0
+                ratio_skew = 0.0
+            
+            # Calculate weight and value kurtosis
+            try:
+                weight_kurtosis = float(self._calculate_kurtosis(weights))
+                value_kurtosis = float(self._calculate_kurtosis(values))
+                ratio_kurtosis = float(self._calculate_kurtosis(value_weight_ratios))
+            except:
+                weight_kurtosis = 0.0
+                value_kurtosis = 0.0
+                ratio_kurtosis = 0.0
             
             # Prepare features exactly as in training
             instance_features = [
@@ -104,16 +164,31 @@ class MLKnapsackSolver:
                 float(np.median(values)),
                 float(np.percentile(values, 25)),
                 float(np.percentile(values, 75)),
-                float(np.sum(values)),
-                float(np.sum(weights)),
-                float(capacity / np.sum(weights)),  # capacity utilization
-                float(np.max(weights) / np.min(weights)),  # weight range ratio
-                float(np.max(values) / np.min(values)),    # value range ratio
+                total_value,
+                total_weight,
+                capacity_ratio,  # capacity utilization
+                float(np.max(weights) / np.min(weights) if np.min(weights) > 0 else np.max(weights)),  # weight range ratio
+                float(np.max(values) / np.min(values) if np.min(values) > 0 else np.max(values)),    # value range ratio
                 float(np.mean(value_weight_ratios)),
                 float(np.std(value_weight_ratios)),
                 float(np.median(value_weight_ratios)),
                 float(np.max(value_weight_ratios)),
                 float(np.min(value_weight_ratios)),
+                # New features
+                density,
+                value_density,
+                correlation,
+                weight_variance,
+                value_variance,
+                weight_skew,
+                value_skew,
+                ratio_skew,
+                weight_kurtosis,
+                value_kurtosis,
+                ratio_kurtosis,
+                # Top values
+                *top_weights,
+                *top_values,
                 # Top k value/weight ratios
                 *[float(x) for x in best_ratios],  # Best 5 ratios (padded if needed)
                 *[float(x) for x in worst_ratios],  # Worst 5 ratios (padded if needed)
@@ -136,10 +211,17 @@ class MLKnapsackSolver:
             if isinstance(selection, np.ndarray):
                 selection = (selection > 0.5).astype(int)
             
+            # Ensure selection array matches actual number of items
+            selection = selection[:len(weights)] if isinstance(selection, np.ndarray) else selection[:len(weights)]
+            
             # Truncate selection to actual number of items and convert to Python list
-            selected_items = [i for i, selected in enumerate(selection) if selected == 1]
-            total_weight = float(sum(weights[i] for i in selected_items))  # Convert to float
-            total_value = float(sum(values[i] for i in selected_items))    # Convert to float
+            selected_items = []
+            for i, selected in enumerate(selection):
+                if i < len(weights) and selected == 1:
+                    selected_items.append(i)
+                    
+            total_weight = float(sum(weights[i] for i in selected_items if i < len(weights)))  # Convert to float
+            total_value = float(sum(values[i] for i in selected_items if i < len(values)))    # Convert to float
             is_feasible = bool(total_weight <= capacity)  # Convert to Python bool
             
             # If solution is infeasible, try to repair it
@@ -163,7 +245,12 @@ class MLKnapsackSolver:
                 selection = improved_selection
                 total_value = improved_value
                 total_weight = improved_weight
-                selected_items = [i for i, selected in enumerate(selection) if selected == 1]
+                
+                # Safely extract selected items
+                selected_items = []
+                for i, selected in enumerate(selection):
+                    if i < len(weights) and selected == 1:
+                        selected_items.append(i)
             
             # Apply capacity maximization to improve capacity utilization
             selection, total_value, total_weight = self._maximize_capacity_utilization(
@@ -173,22 +260,12 @@ class MLKnapsackSolver:
                 capacity,
                 total_weight
             )
-            selected_items = [i for i, selected in enumerate(selection) if selected == 1]
-
-            # For medium-sized problems (15 < n ≤ 30), compare with DP and take the better solution
-            if 15 < n_items <= 30:
-                # Only run DP if we still have enough time budget
-                elapsed_time = time.time() - start_time
-                if elapsed_time < 0.5:  # If less than 500ms has elapsed
-                    try:
-                        dp_solution = self.dp_solver.solve(weights.tolist(), values.tolist(), capacity)
-                        if dp_solution['total_value'] > total_value:
-                            # DP found better solution, use it
-                            dp_solution['solve_time'] = time.time() - start_time
-                            return dp_solution
-                    except Exception as e:
-                        # If DP fails (e.g., memory issues), continue with ML solution
-                        pass
+            
+            # Safely extract selected items to avoid index errors
+            selected_items = []
+            for i, selected in enumerate(selection):
+                if i < len(weights) and selected == 1:
+                    selected_items.append(i)
             
             # Add solve time to ML solution
             solve_time = time.time() - start_time
@@ -207,11 +284,10 @@ class MLKnapsackSolver:
             logger.warning(f"ML solver failed: {str(e)}. Falling back to traditional solvers.")
             
             try:
-                # For problems up to 30 items, try DP first
-                if len(weights) <= 30:
-                    dp_solution = self.dp_solver.solve(weights, values, capacity)
-                    dp_solution['solve_time'] = time.time() - start_time
-                    return dp_solution
+                # Try DP first
+                dp_solution = self.dp_solver.solve(weights, values, capacity)
+                dp_solution['solve_time'] = time.time() - start_time
+                return dp_solution
             except Exception as dp_error:
                 logger.warning(f"DP solver failed: {str(dp_error)}. Falling back to greedy.")
             
@@ -229,15 +305,26 @@ class MLKnapsackSolver:
     ) -> Tuple[np.ndarray, float, float]:
         """Repair an infeasible solution by removing items."""
         selection = selection.copy()
-        selected_items = [i for i, selected in enumerate(selection) if selected == 1]
+        # Ensure selection array size matches weights/values
+        if isinstance(selection, np.ndarray) and len(selection) > len(weights):
+            selection = selection[:len(weights)]
+            
+        selected_items = []
+        for i, selected in enumerate(selection):
+            if i < len(weights) and selected == 1:
+                selected_items.append(i)
         
-        # Calculate value/weight ratios
-        ratios = [(i, values[i]/weights[i]) for i in selected_items]
+        # Calculate value/weight ratios safely
+        ratios = []
+        for i in selected_items:
+            if i < len(weights) and i < len(values) and weights[i] > 0:
+                ratios.append((i, values[i]/weights[i]))
+        
         ratios.sort(key=lambda x: x[1])  # Sort by ratio ascending
         
         # Remove items with lowest value/weight ratio until feasible
-        total_weight = sum(weights[i] for i in selected_items)
-        total_value = sum(values[i] for i in selected_items)
+        total_weight = sum(weights[i] for i in selected_items if i < len(weights))
+        total_value = sum(values[i] for i in selected_items if i < len(values))
         
         while total_weight > capacity and ratios:
             item_idx = ratios.pop(0)[0]  # Remove item with lowest ratio
@@ -246,6 +333,34 @@ class MLKnapsackSolver:
             total_value -= values[item_idx]
         
         return selection, total_weight, total_value
+    
+    def _calculate_skewness(self, data: np.ndarray) -> float:
+        """Calculate skewness of a distribution."""
+        if len(data) < 3:
+            return 0.0
+        
+        mean = np.mean(data)
+        std = np.std(data)
+        if std == 0:
+            return 0.0
+            
+        n = len(data)
+        skew = (1/n) * np.sum(((data - mean) / std) ** 3)
+        return float(skew)
+    
+    def _calculate_kurtosis(self, data: np.ndarray) -> float:
+        """Calculate kurtosis of a distribution."""
+        if len(data) < 4:
+            return 0.0
+            
+        mean = np.mean(data)
+        std = np.std(data)
+        if std == 0:
+            return 0.0
+            
+        n = len(data)
+        kurt = (1/n) * np.sum(((data - mean) / std) ** 4) - 3  # Excess kurtosis
+        return float(kurt)
     
     def _local_search_optimization(
         self, 
@@ -256,9 +371,15 @@ class MLKnapsackSolver:
         max_iterations: int = 100
     ) -> Tuple[np.ndarray, float, float]:
         """Apply local search optimization to improve the solution."""
+        # Ensure selection array size matches weights/values
+        if isinstance(selection, np.ndarray) and len(selection) > len(weights):
+            selection = selection[:len(weights)]
+        
         best_selection = selection.copy()
-        best_value = sum(values[i] for i, selected in enumerate(selection) if selected == 1)
-        best_weight = sum(weights[i] for i, selected in enumerate(selection) if selected == 1)
+        best_value = sum(values[i] for i, selected in enumerate(selection) 
+                         if i < len(values) and selected == 1)
+        best_weight = sum(weights[i] for i, selected in enumerate(selection) 
+                          if i < len(weights) and selected == 1)
         
         for _ in range(max_iterations):
             improved = False
@@ -307,9 +428,16 @@ class MLKnapsackSolver:
         max_iterations: int = 200
     ) -> Tuple[np.ndarray, float, float]:
         """Maximize capacity utilization by adding more items if possible."""
+        # Ensure selection array size matches weights/values
+        if isinstance(selection, np.ndarray) and len(selection) > len(weights):
+            selection = selection[:len(weights)]
+            
         best_selection = selection.copy()
-        best_value = sum(values[i] for i, selected in enumerate(selection) if selected == 1)
-        best_weight = current_weight
+        # Recalculate best_value safely instead of using current_weight to avoid inconsistencies
+        best_value = sum(values[i] for i, selected in enumerate(selection) 
+                         if i < len(values) and selected == 1)
+        best_weight = sum(weights[i] for i, selected in enumerate(selection) 
+                          if i < len(weights) and selected == 1)
         remaining_capacity = capacity - best_weight
         
         # If we're already using most of the capacity, don't bother
