@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from typing import List
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from solver.traditional_solver import DPKnapsackSolver, GreedyKnapsackSolver
-from solver.ml_solver import MLKnapsackSolver
+from knapsack.solver.traditional_solver import DPKnapsackSolver, GreedyKnapsackSolver
+from knapsack.solver.ml_solver import MLKnapsackSolver
 
 app = FastAPI(title="Knapsack ML API")
 

@@ -2,8 +2,8 @@ import argparse
 import json
 from typing import List
 import numpy as np
-from solver.traditional_solver import DPKnapsackSolver, GreedyKnapsackSolver
-from solver.ml_solver import MLKnapsackSolver
+from knapsack.solver.traditional_solver import DPKnapsackSolver, GreedyKnapsackSolver
+from knapsack.solver.ml_solver import MLKnapsackSolver
 from utils.evaluation import KnapsackEvaluator
 
 def parse_list(s: str) -> List[float]:

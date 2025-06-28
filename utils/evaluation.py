@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Any
 import time
-from solver.traditional_solver import DPKnapsackSolver, GreedyKnapsackSolver
-from solver.ml_solver import MLKnapsackSolver
+from knapsack.solver.traditional_solver import DPKnapsackSolver, GreedyKnapsackSolver
+from knapsack.solver.ml_solver import MLKnapsackSolver
 
 class KnapsackEvaluator:
     def __init__(self):
