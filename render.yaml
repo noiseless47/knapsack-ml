@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: knapsack-ml-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
+    plan: free 
